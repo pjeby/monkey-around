@@ -1,7 +1,12 @@
-type unsubscribe = () => void;
+type uninstaller = () => void;
+type methodWrapperFactory<T extends Function> = (next: T) => T
 
-export function around<T extends Function>(obj: Object, method: string, createWrapper: (next: T) => T): unsubscribe {
+export function around<T extends Function>(obj:Object, factories: {[key: string]: methodWrapperFactory<T>}): uninstaller {
+    const removers = Object.keys(factories).map(key => around1(obj, key, factories[key]));
+    return removers.length === 1 ? removers[0] : function () { removers.forEach(r => r()); };
+}
 
+function around1<T extends Function>(obj: Object, method: string, createWrapper: methodWrapperFactory<T>): uninstaller {
     const original = obj[method], hadOwn = obj.hasOwnProperty(method);
     let current = createWrapper(original);
 
@@ -25,12 +30,12 @@ export function around<T extends Function>(obj: Object, method: string, createWr
         if (obj[method] === wrapper) {
             if (hadOwn) obj[method] = original; else delete obj[method];
         }
+        if (current === original) return;
         // Else pass future calls through, and remove wrapper from the prototype chain
         current = original;
         Object.setPrototypeOf(wrapper, original || Function);
     }
 }
-
 
 export function after(promise: Promise<any>, cb: () => void): Promise<void> {
     return promise.then(cb, cb);

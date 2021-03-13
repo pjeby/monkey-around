@@ -2,7 +2,7 @@
 
 Ever needed to monkeypatch a method someplace?  It's not hard to do if you're the only one doing it, or if you can leave the patch in place for the life of your program.  But it's not quite as easy if multiple independently-written bits of code need to patch the same method(s), and might need to uninstall their patches in arbitrary order.
 
-That's what `monkey-around` is for.  Let's say you have an object that works like this:
+That's what `monkey-around` is for.  Let's say you have an object that looks like this:
 
 ```js
 // Unwrapped object
@@ -27,15 +27,19 @@ Then you can import the `around` function:
 import {around} from 'monkey-around';
 ```
 
-And wrap the method like so:
+And wrap one or more methods like so:
 
 ```js
 // Add a wrapper
-var uninstall1 = around(anObject, "someMethod", oldMethod => function(...args) {
-    console.log("wrapper 1 before someMethod", args);
-    const result = oldMethod && oldMethod.apply(this, args);
-    console.log("wrapper 1 after someMethod", result);
-    return result;
+var uninstall1 = around(anObject, {
+    someMethod(oldMethod) {
+        return function(...args) {
+            console.log("wrapper 1 before someMethod", args);
+            const result = oldMethod && oldMethod.apply(this, args);
+            console.log("wrapper 1 after someMethod", result);
+            return result;
+        }
+    }
 });
 
 anObject.someMethod(23);
@@ -46,19 +50,23 @@ anObject.someMethod(23);
 > wrapper 1 after someMethod 42
 > ```
 
-The `around()` function takes an object, a method name, and a factory function that should accept the old method (which may be `undefined`) and return a replacement method.  The old method is replaced with a wrapper that delegates to the newly-created method.  The`around()` function then returns an "uninstaller" -- a function that can be called to disable or remove the wrapper.
+The `around()` function takes an object, and an object whose own-methods are factory functions that receive the old method (which may be `undefined`) and return a replacement method.  Each old method on the original object is then replaced with a wrapper that delegates to the newly-created method.  The `around()` function then returns an "uninstaller" -- a function that can be called to disable or remove all of the wrappers it created.
 
-The wrapper function is set up to inherit properties from the newly-created method, which in turn is configured to inherit from the original method, so that any properties or methods attached to it will also be visible on the wrapper (and any wrappers added around that wrapper).
+The wrapper functions are set up to inherit properties from the newly-created method, which in turn are configured to inherit from the original method(s), so that any properties or methods attached to them will also be visible on the wrappers (and any wrappers added around those wrappers).
 
-Multiple wrappers can be applied to the same object:
+Multiple wrappers can be applied to the same method of the same object:
 
 ```js
 // Add a second wrapper
-var uninstall2 = around(anObject, "someMethod", oldMethod => function(...args) {
-    console.log("wrapper 2 before someMethod", args);
-    const result = oldMethod && oldMethod.apply(this, args);
-    console.log("wrapper 2 after someMethod", result);
-    return result;
+var uninstall2 = around(anObject, {
+    someMethod(oldMethod) {
+        return function(...args) {
+            console.log("wrapper 2 before someMethod", args);
+            const result = oldMethod && oldMethod.apply(this, args);
+            console.log("wrapper 2 after someMethod", result);
+            return result;
+        }
+    }
 });
 
 anObject.someMethod(); // runs both wrappers
@@ -71,7 +79,7 @@ anObject.someMethod(); // runs both wrappers
 > wrapper 2 after someMethod 42
 > ```
 
-And they can be uninstalled in any order:
+And the uninstallers can be called in any order:
 
 ```js
 // Uninstall wrappers
@@ -87,9 +95,15 @@ anObject.someMethod(); // runs only the original method
 > someMethod []
 > ```
 
-However, when uninstallation is requested, the wrapper is removed...  unless another wrapper has since been added, in which case the wrapper will delegate to the original method instead of the new version.  (Until such time as it detects it is once again safe to remove itself entirely.)
+However, when uninstallation is requested, the wrapper for each method is removed...  unless another wrapper has since been added for that method, in which case the wrapper will delegate to the original method instead of the new version.  (Until such time as it detects it is once again safe to remove itself entirely.)
 
 ### Serializing Invocation of Async Methods
+
+<!--mockdown: ++ignore -->
+
+```js
+import {serialize} from 'monkey-around';
+```
 
 Async methods that manipulate the state of an object can sometimes be subject to race conditions if the method can be called (e.g. from an event handler) while another invocation is already occurring.  In such cases, it can be desirable to defer the execution of a method until the promise from its previous invocation has settled.
 
@@ -113,7 +127,7 @@ async function demo() {
     aService.method("Without 2");
     await sleep(20);
 
-    around(aService, "method", serialize);
+    around(aService, {method: serialize});
     console.log();
 
     console.log("With serialization:");

@@ -1,7 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.serialize = exports.after = exports.around = void 0;
-function around(obj, method, createWrapper) {
+function around(obj, factories) {
+    const removers = Object.keys(factories).map(key => around1(obj, key, factories[key]));
+    return removers.length === 1 ? removers[0] : function () { removers.forEach(r => r()); };
+}
+exports.around = around;
+function around1(obj, method, createWrapper) {
     const original = obj[method], hadOwn = obj.hasOwnProperty(method);
     let current = createWrapper(original);
     // Let our wrapper inherit static props from the wrapping method,
@@ -26,12 +31,13 @@ function around(obj, method, createWrapper) {
             else
                 delete obj[method];
         }
+        if (current === original)
+            return;
         // Else pass future calls through, and remove wrapper from the prototype chain
         current = original;
         Object.setPrototypeOf(wrapper, original || Function);
     }
 }
-exports.around = around;
 function after(promise, cb) {
     return promise.then(cb, cb);
 }
