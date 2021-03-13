@@ -1,0 +1,27 @@
+{
+  "name": "monkey-around",
+  "version": "1.0.0",
+  "description": "Co-operatively, removably, monkeypatch around methods, or serialize their execution",
+  "repository": "https://github.com/pjeby/monkey-around.git",
+  "author": "PJ Eby",
+  "license": "ISC",
+  "files": [
+    "index.*s"
+  ],
+  "scripts": {
+    "build": "tsc --build",
+    "watch": "mocha --watch",
+    "test": "mocha && tsc --build"
+  },
+  "mocha": {
+    "spec": "spec.js",
+    "watch-files": ["index.ts", "spec.js", "README.md"],
+    "require": ["ts-node/register"]
+  },
+  "devDependencies": {
+    "mocha": "^8.3.0",
+    "mockdown": "^0.3.2",
+    "ts-node": "^9.1.1",
+    "typescript": "4.1.3"
+  }
+}
