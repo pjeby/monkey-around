@@ -1,0 +1,9 @@
+{
+    "compilerOptions": {
+        "composite": true,
+        "target": "es6",
+        "module": "ESNext",
+        "outDir": "./mjs",
+        "newLine": "lf"
+    }
+}

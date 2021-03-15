@@ -4,5 +4,6 @@
         "module": "CommonJS",
         "declaration": true,
         "newLine": "lf"
-    }
+    },
+    "references": [{"path": "./tsconfig.esm.json"}]
 }

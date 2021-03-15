@@ -13,3 +13,6 @@ yarn.lock
 
 node_modules
 package-lock.json
+
+mjs/index.d.ts
+mjs/*.tsbuildinfo
