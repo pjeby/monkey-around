@@ -107,7 +107,7 @@ import {serialize} from 'monkey-around';
 
 Async methods that manipulate the state of an object can sometimes be subject to race conditions if the method can be called (e.g. from an event handler) while another invocation is already occurring.  In such cases, it can be desirable to defer the execution of a method until the promise from its previous invocation has settled.
 
-For this purpose, `monkey-around` offers a `serialize()` function, that takes an async function and returns a new async function that only calls the old function after its most-recent invocation has settled.  You can thus use it as a method factory argument to `around()`, e.g. `around(anObject, "asyncMethod", serialize)`, to prevent re-entry of the method while an invocation is pending.
+For this purpose, `monkey-around` offers a `serialize()` function, that takes an async function and returns a new async function that only calls the old function after its most-recent invocation has settled.  You can thus use it as a method factory argument to `around()`, e.g. `around(anObject, {asyncMethod: serialize})`, to prevent re-entry of the method while an invocation is pending.
 
 ```js
 function sleep(ms) { return new Promise(res => setTimeout(res, ms)); }
