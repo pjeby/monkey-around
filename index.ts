@@ -1,7 +1,7 @@
 type uninstaller = () => void;
 type methodWrapperFactory<T extends Function> = (next: T) => T
 
-export function around<O extends Record<string, any>>(obj: O, factories: {[key in keyof O]: methodWrapperFactory<O[key]>}): uninstaller {
+export function around<O extends Record<string, any>>(obj: O, factories: Partial<{[key in keyof O]: methodWrapperFactory<O[key]>}>): uninstaller {
     const removers = Object.keys(factories).map(key => around1(obj, key, factories[key]));
     return removers.length === 1 ? removers[0] : function () { removers.forEach(r => r()); };
 }
