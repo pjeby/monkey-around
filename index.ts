@@ -1,12 +1,16 @@
 type uninstaller = () => void;
 type methodWrapperFactory<T extends Function> = (next: T) => T
 
-export function around<T extends Function>(obj:Object, factories: {[key: string]: methodWrapperFactory<T>}): uninstaller {
+export function around<O extends Record<string, any>>(
+    obj:O, factories: Partial<{ [key in keyof O]: methodWrapperFactory<O[key]> }>
+): uninstaller {
     const removers = Object.keys(factories).map(key => around1(obj, key, factories[key]));
     return removers.length === 1 ? removers[0] : function () { removers.forEach(r => r()); };
 }
 
-function around1<T extends Function>(obj: Object, method: string, createWrapper: methodWrapperFactory<T>): uninstaller {
+function around1<O extends Record<string, any>>(
+    obj: O, method: keyof O, createWrapper: methodWrapperFactory<O[keyof O]>
+): uninstaller {
     const original = obj[method], hadOwn = obj.hasOwnProperty(method);
     let current = createWrapper(original);
 
@@ -14,7 +18,7 @@ function around1<T extends Function>(obj: Object, method: string, createWrapper:
     // and the wrapping method, props from the original method
     if (original) Object.setPrototypeOf(current, original);
     Object.setPrototypeOf(wrapper, current);
-    obj[method] = wrapper;
+    obj[method] = wrapper as O[keyof O];
 
     // Return a callback to allow safe removal
     return remove;
