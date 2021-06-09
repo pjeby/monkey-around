@@ -14,7 +14,7 @@ function around1<O extends Record<string, any>>(obj: O, method: keyof O, createW
     // and the wrapping method, props from the original method
     if (original) Object.setPrototypeOf(current, original);
     Object.setPrototypeOf(wrapper, current);
-    (obj[method] as any) = wrapper;
+    obj[method] = wrapper as O[keyof O];
 
     // Return a callback to allow safe removal
     return remove;
