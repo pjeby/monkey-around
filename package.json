@@ -1,6 +1,6 @@
 {
   "name": "monkey-around",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Co-operatively, removably, monkeypatch around methods, or serialize their execution",
   "keywords": ["monkeypatch", "monkey-patch", "aop", "pointcut", "advice", "interceptor", "interception"],
   "repository": "https://github.com/pjeby/monkey-around.git",
