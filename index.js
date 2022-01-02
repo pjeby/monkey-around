@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.serialize = exports.after = exports.around = void 0;
+exports.serialize = exports.after = exports.dedupe = exports.around = void 0;
 function around(obj, factories) {
     const removers = Object.keys(factories).map(key => around1(obj, key, factories[key]));
     return removers.length === 1 ? removers[0] : function () { removers.forEach(r => r()); };
@@ -38,6 +38,14 @@ function around1(obj, method, createWrapper) {
         Object.setPrototypeOf(wrapper, original || Function);
     }
 }
+function dedupe(key, oldFn, newFn) {
+    check[key] = key;
+    return check;
+    function check(...args) {
+        return (oldFn[key] === key ? oldFn : newFn).apply(this, args);
+    }
+}
+exports.dedupe = dedupe;
 function after(promise, cb) {
     return promise.then(cb, cb);
 }

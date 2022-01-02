@@ -97,6 +97,78 @@ anObject.someMethod(); // runs only the original method
 
 However, when uninstallation is requested, the wrapper for each method is removed...  unless another wrapper has since been added for that method, in which case the wrapper will delegate to the original method instead of the new version.  (Until such time as it detects it is once again safe to remove itself entirely.)
 
+### Co-operative/Shared Patches
+
+<!--mockdown: ++ignore -->
+
+```js
+import {dedupe} from 'monkey-around';
+```
+
+When multiple clients may require the same patch of a target library or platform (as is often the case with [Obsidian](https://obsidian.md/) plugins), it may be important to perform the new behavior only once, no matter how many clients are currently active (e.g. to avoid triggering duplicate events).  For this purpose,  `monkey-around` offers a `dedupe()` function, that takes a string or symbol as a "key" to ensure that one (and *only* one) version of the patch is applied.  The de-duplication is done at runtime rather than patch time, so that patches can be added or removed at any time and still only one version of the patch will run for a given invocation of the wrapped method.
+
+To use it, you should choose a globally unique string (or `Symbol.for()` that string) that will stand for the functionality provided by the patch.  Then, return `dedupe(key, oldMethod, newMethod)` from your around wrapper method, like this:
+
+```js
+// Add a wrapper
+var demo_key = "demo-wrapper@github.com/pjeby/monkey-around";
+var uninstall1 = around(anObject, {
+    someMethod(oldMethod) {
+        return dedupe(demo_key, oldMethod, function(...args) {
+            console.log("wrapper 1 before someMethod", args);
+            const result = oldMethod && oldMethod.apply(this, args);
+            console.log("wrapper 1 after someMethod", result);
+            return result;
+        });
+    }
+});
+
+anObject.someMethod(23);
+```
+
+> ```
+> wrapper 1 before someMethod [ 23 ]
+> someMethod [ 23 ]
+> wrapper 1 after someMethod 42
+> ```
+
+As you can see, the first wrapper applied works the same as any other patch.  The second, however, does not:
+
+```js
+// Add a second wrapper
+var uninstall2 = around(anObject, {
+    someMethod(oldMethod) {
+        return dedupe(demo_key, oldMethod, function(...args) {
+            console.log("wrapper 2 before someMethod", args);
+            const result = oldMethod && oldMethod.apply(this, args);
+            console.log("wrapper 2 after someMethod", result);
+            return result;
+        });
+    }
+});
+
+anObject.someMethod(); // Second wrapper won't be called while first is in place!
+```
+> ```
+> wrapper 1 before someMethod []
+> someMethod []
+> wrapper 1 after someMethod 42
+> ```
+
+But if the first wrapper is removed, then the second wrapper will run:
+
+```js
+uninstall1();
+anObject.someMethod(99); //
+```
+> ```
+> wrapper 2 before someMethod [ 99 ]
+> someMethod [ 99 ]
+> wrapper 2 after someMethod 42
+> ```
+
+Thus, no matter how many independent clients/plugins/etc. apply the "same" patch, only the oldest currently-active such patch will be run: all others will be bypassed in the call chain, so long as only `monkey-around` is used to do the patching.
+
 ### Serializing Invocation of Async Methods
 
 <!--mockdown: ++ignore -->

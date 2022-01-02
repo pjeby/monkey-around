@@ -41,6 +41,15 @@ function around1<O extends Record<string, any>>(
     }
 }
 
+export function dedupe<T extends Function>(key: string|symbol, oldFn: T, newFn: T): T {
+    check[key] = key;
+    return check as unknown as T;
+    function check(...args) {
+        // Skip running the patch if another version exists "upstream" in the call chain
+        return (oldFn[key]===key ? oldFn : newFn).apply(this, args);
+    }
+}
+
 export function after(promise: Promise<any>, cb: () => void): Promise<void> {
     return promise.then(cb, cb);
 }

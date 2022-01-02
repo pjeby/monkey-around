@@ -1,4 +1,4 @@
-const {around, serialize, after} = require("./index.ts");
+const {around, serialize, after, dedupe} = require("./index.ts");
 const mockdown = require("mockdown");
 const assert = require("assert")
 
@@ -64,6 +64,6 @@ describe("around()", function(){
 });
 
 mockdown.testFiles(['README.md'], describe, it, {
-    globals: { around, serialize, after },
+    globals: { around, serialize, after, dedupe },
 });
 

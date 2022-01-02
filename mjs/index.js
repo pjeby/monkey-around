@@ -34,6 +34,13 @@ function around1(obj, method, createWrapper) {
         Object.setPrototypeOf(wrapper, original || Function);
     }
 }
+export function dedupe(key, oldFn, newFn) {
+    check[key] = key;
+    return check;
+    function check(...args) {
+        return (oldFn[key] === key ? oldFn : newFn).apply(this, args);
+    }
+}
 export function after(promise, cb) {
     return promise.then(cb, cb);
 }
