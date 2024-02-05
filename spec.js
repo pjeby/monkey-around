@@ -60,6 +60,23 @@ describe("around()", function(){
             original.x = "y"
             assert(obj.thing.x === "y")
         });
+        it("allows prototype and instance methods to be patched separately", function(){
+            const obj = {thing(){ return 99; }}, child = Object.create(obj);
+            const original = obj.thing;
+            const r1 = around(child, {thing: null_wrapper});
+            const r2 = around(obj, {thing(old) {
+                return function() {
+                    return 42;
+                }
+            }});
+            assert(obj.thing() === 42);
+            r2();
+            assert (obj.thing === original);
+            assert(obj.thing() === 99);
+            r1();
+            assert (child.thing === original);
+            assert(!child.hasOwnProperty("thing"));
+        })
     });
 });
 

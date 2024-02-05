@@ -11,12 +11,14 @@ export function around<O extends Record<string, any>>(
 function around1<O extends Record<string, any>>(
     obj: O, method: keyof O, createWrapper: methodWrapperFactory<O[keyof O]>
 ): uninstaller {
-    const original = obj[method], hadOwn = obj.hasOwnProperty(method);
+    const inherited = obj[method], hadOwn = obj.hasOwnProperty(method), original = hadOwn ? inherited : (function() {
+        return Object.getPrototypeOf(obj)[method].apply(this, arguments);
+    }) as typeof obj[typeof method];
     let current = createWrapper(original);
 
     // Let our wrapper inherit static props from the wrapping method,
     // and the wrapping method, props from the original method
-    if (original) Object.setPrototypeOf(current, original);
+    if (inherited) Object.setPrototypeOf(current, inherited);
     Object.setPrototypeOf(wrapper, current);
     obj[method] = wrapper as O[keyof O];
 
@@ -37,7 +39,7 @@ function around1<O extends Record<string, any>>(
         if (current === original) return;
         // Else pass future calls through, and remove wrapper from the prototype chain
         current = original;
-        Object.setPrototypeOf(wrapper, original || Function);
+        Object.setPrototypeOf(wrapper, inherited || Function);
     }
 }
 

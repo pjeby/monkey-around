@@ -5,10 +5,12 @@ function around(obj, factories) {
   };
 }
 function around1(obj, method, createWrapper) {
-  const original = obj[method], hadOwn = obj.hasOwnProperty(method);
+  const inherited = obj[method], hadOwn = obj.hasOwnProperty(method), original = hadOwn ? inherited : function() {
+    return Object.getPrototypeOf(obj)[method].apply(this, arguments);
+  };
   let current = createWrapper(original);
-  if (original)
-    Object.setPrototypeOf(current, original);
+  if (inherited)
+    Object.setPrototypeOf(current, inherited);
   Object.setPrototypeOf(wrapper, current);
   obj[method] = wrapper;
   return remove;
@@ -27,7 +29,7 @@ function around1(obj, method, createWrapper) {
     if (current === original)
       return;
     current = original;
-    Object.setPrototypeOf(wrapper, original || Function);
+    Object.setPrototypeOf(wrapper, inherited || Function);
   }
 }
 function dedupe(key, oldFn, newFn) {
