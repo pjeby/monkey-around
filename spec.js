@@ -1,6 +1,6 @@
-const {around, serialize, after, dedupe} = require("./index.ts");
-const mockdown = require("mockdown");
-const assert = require("assert")
+import {around, serialize, after, dedupe} from "./index.ts";
+import mockdown from "mockdown";
+import assert from "assert";
 
 function null_wrapper(f) { return function(...args) {return f(...args);} }
 
@@ -53,7 +53,7 @@ describe("around()", function(){
             assert(obj.thing === original);
         });
         it("inherits from the previous definition", function(){
-            obj = {thing(){}};
+            const obj = {thing(){}};
             const original = obj.thing;
             around(obj, {thing: null_wrapper});
             obj.thing();

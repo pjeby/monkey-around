@@ -1,9 +1,10 @@
 {
     "compilerOptions": {
         "target": "es6",
-        "module": "CommonJS",
-        "declaration": true,
+        "module": "Node16",
+        "moduleResolution": "Node16",
+        "noEmit": true,
         "newLine": "lf"
     },
-    "references": [{"path": "./tsconfig.esm.json"}]
+    "include": [ "index.ts" ]
 }
